@@ -147,3 +147,51 @@ exports.signup = async (req, res) => {
     return res.status(400).send(err.message);
   }
 };
+
+// eslint-disable-next-line consistent-return
+exports.login = async (req, res) => {
+  try {
+    // Get user data
+    const { emailOrUsername, password } = req.body;
+
+    // Validate user data
+    if (!(emailOrUsername && password)) {
+      res.status(400).send("All data is required");
+    }
+
+    // A regex expression to test if the given value is an email or username
+    const regexEmail =
+      /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+    const data = regexEmail.test(emailOrUsername)
+      ? {
+          email: emailOrUsername,
+        }
+      : {
+          username: emailOrUsername,
+        };
+
+    // Validate if user exist in our database
+    const user = await User.findOne(data);
+
+    if (user && (await bcrypt.compare(password, user.password))) {
+      // Create token
+      const { email } = user;
+      // save user token
+      user.token = jwt.sign(
+        // eslint-disable-next-line no-underscore-dangle
+        { user_id: user._id, email },
+        process.env.TOKEN_SECRET_KEY,
+        {
+          expiresIn: "2h",
+        }
+      );
+
+      // user
+      return res.status(200).json(user);
+    }
+    return res.status(400).send("Invalid Credentials");
+  } catch (err) {
+    console.error(err);
+    return res.status(400).send(err.message);
+  }
+};

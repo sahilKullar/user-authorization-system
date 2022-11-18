@@ -11,4 +11,7 @@ router.post("/signup", userController.signup);
 // Map the `verify` request to the verify function
 router.get("/confirmation/:confirmationToken", userController.verifyEmail);
 
+// Map the `login` request to the login function
+router.post("/login", userController.login);
+
 module.exports = router;
